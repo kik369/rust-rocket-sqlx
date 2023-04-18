@@ -1,0 +1,37 @@
+<nav>
+    <ul>
+        <li><h1>rust-rocket-sqlx</h1></li>
+    </ul>
+    <ul>
+        <li>
+            {% if user.name %}
+            <b>{{ user.name }}</b>
+            {% endif %}
+        </li>
+        <li>
+            {% if user.profile_pic %}
+            <img src="{{ user.profile_pic }}" height="50px" width="50px" alt="user profile pic" />
+            {% endif %}
+        </li>
+    </ul>
+</nav>
+<nav>
+    <ul>
+        <li><a href="/">Home</a></li>
+        {% if user %}
+        <li><a href="/add-project">New project</a></li>
+        {% endif %} {% if admin.admin or user.admin %}
+        <li><a href="/user/{{ user.id }}">User ID</a></li>
+        {% endif %}
+    </ul>
+    <ul></ul>
+    <ul>
+        {% if not user %}
+        <li><a href="/add-user">Register</a></li>
+        <li><a href="/login">Log In</a></li>
+        {% endif %} {% if user %}
+        <li><a href="/profile">Profile</a></li>
+        <li><a href="/logout">Log Out</a></li>
+        {% endif %}
+    </ul>
+</nav>

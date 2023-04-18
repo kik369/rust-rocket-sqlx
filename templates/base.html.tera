@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="" />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.classless.min.css"
+        />
+        <title>sqlx</title>
+    </head>
+    <body>
+        {% include "msg" %}
+        <header>{% include "header" %}</header>
+        <main>{% block content %}{% endblock %}</main>
+        <footer>{% include "footer" %}</footer>
+    </body>
+</html>

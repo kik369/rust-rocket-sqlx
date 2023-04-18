@@ -1,0 +1,54 @@
+{% extends "base" %} {% block content %}
+<hgroup>
+    <h2>Project Details</h2>
+</hgroup>
+<article>
+    <header>
+        <h2>{{ project.name }}</h2>
+    </header>
+    <b>id:</b> {{ project.id }}<br />
+    <b>start:</b> {{ project.proj_start_date }}<br />
+    <b>end:</b> {{ project.proj_end_date }}<br />
+    <b>owner:</b> {{ project.owner }}<br />
+    <b>participants:</b> {% if project.participants %}
+    <ul>
+        {% for participant in project.participants %}
+        <li>{{ participant }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <footer>
+        <a href="/edit/project/{{ project.id }}" role="button">Edit Project</a>
+        <a href="/delete/project/{{ project.id }}" role="button" data-method="delete"
+            >Delete Project</a
+        >
+    </footer>
+</article>
+{% if tasks %}
+<article>
+    <header>
+        <h2>Tasks</h2>
+    </header>
+    <ul>
+        {% for task in tasks %}
+        <li>{{ task.description }}</li>
+        <b>id:</b>
+        {{
+            task.id
+        }}<br />
+        <b>id:</b>
+        {{
+            task.task_start_date
+        }}<br />
+        <b>id:</b>
+        {{
+            task.task_end_date
+        }}<br />
+        <b>id:</b>
+        {{
+            task.owner_proj
+        }}<br />
+        {% endfor %}
+    </ul>
+</article>
+{% endif %} {% endblock %}

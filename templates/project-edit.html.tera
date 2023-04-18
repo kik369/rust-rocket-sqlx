@@ -1,0 +1,14 @@
+{% extends "base" %} {% block content %}
+<h1>Edit a Project</h1>
+<form action="/edit/project/{{ project.id }}" method="post">
+    <input type="text" name="name" id="name" value="{{ project.name }}" /><br />
+    <input
+        type="datetime-local"
+        name="end_date"
+        id="end_date"
+        value="{{ project.proj_end_date }}"
+        step="1"
+    /><br />
+    <input type="submit" value="Edit Project" />
+</form>
+{% endblock %}

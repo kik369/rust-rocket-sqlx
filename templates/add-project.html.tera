@@ -1,0 +1,24 @@
+{% extends "base" %} {% block content %}
+<hgroup>
+    <h2>Add a new project</h2>
+    <p>If a user is logged in</p>
+</hgroup>
+
+{% if values %}
+<p>submission data</p>
+<ul>
+    {% for key, value in values %}
+    <li>
+        <strong>{{ key }}</strong> - {{ value[0] }}
+    </li>
+    {% endfor %}
+</ul>
+<hr />
+{% endif %}
+
+<form action="/add-project" method="post">
+    <label for="name">Project Title</label>
+    <input type="text" name="name" id="name" /><br />
+    <input type="submit" value="Create project" />
+</form>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base" %} {% block content %}
+<hgroup>
+    <h2>
+        {{ user.name }}
+    </h2>
+    <p>{{ user.email }}</p>
+</hgroup>
+<p>
+    <img src="{{ user.profile_pic }}" height="75px" width="75px" alt="default profile pic" /><br />
+    <b>user:</b> {{ user.id }}<br />
+    <b>email:</b> {{ user.email }}<br />
+    <b>name:</b> {{ user.name }}<br />
+    <b>hashed password:</b> {{ user.password }}<br />
+    <b>created:</b> {{ user.created }}<br />
+    <b>profile_pic:</b> {{ user.profile_pic }}<br />
+    <b>admin:</b> {% if user.admin %}
+    <b
+        ><ins>{{ user.admin }}</ins></b
+    >
+    {% else %}
+    <b>{{ user.admin }}</b>
+    {% endif %}<br />
+    <b>premium:</b> {% if user.premium %}
+    <b
+        ><ins>{{ user.premium }}</ins></b
+    >
+    {% else %}
+    <b>{{ user.premium }}</b>
+    {% endif %}
+</p>
+{% endblock %}

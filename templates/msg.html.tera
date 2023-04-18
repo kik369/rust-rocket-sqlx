@@ -1,0 +1,16 @@
+<p></p>
+<nav>
+    <ul></ul>
+    <ul>
+        {% if msg %}
+        {% if msg[0] == "success" %}
+        <b><ins>{{ msg[1] }}</ins></b>
+        {% elif  msg[0] == "warning" %}
+        <b><u>{{ msg[1] }}</del></b>
+        {% else %}
+        <b><del>{{ msg[1] }}</del></b>
+        {% endif %}
+        {% endif %}
+    </ul>
+    <ul></ul>
+</nav>

@@ -1,0 +1,28 @@
+[package]
+name = "rust-rocket-sqlx"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bcrypt = "0.14.0"
+dotenvy = "0.15.7"
+chrono = "0.4.24"
+
+[dependencies.rocket]
+version = "=0.5.0-rc.3"
+features = ["json", "secrets"]
+
+[dependencies.rocket_dyn_templates]
+version = "=0.1.0-rc.3"
+features = ["tera"]
+
+[dependencies.sqlx]
+version = "0.6.0"
+default-features = false
+features = ["macros", "offline", "migrate"]
+
+[dependencies.rocket_db_pools]
+version = "=0.1.0-rc.3"
+features = ["sqlx_sqlite"]

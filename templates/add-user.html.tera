@@ -1,0 +1,27 @@
+{% extends "base" %} {% block content %}
+<hgroup>
+    <h2>Register a new user</h2>
+    <p>Or <a href="/login">Log In</a></p>
+</hgroup>
+<form action="/add-user" method="post">
+    <label for="email">Email</label>
+    <input type="email" name="email" id="email" /><br />
+    <label for="name">Name</label>
+    <input type="text" name="name" id="name" /><br />
+    <label for="password">Password</label>
+    <input type="password" name="password" id="password" /><br />
+    <label for="password_check">Password Check</label>
+    <input type="password" name="password_check" id="password_check" /><br />
+    <input type="submit" value="Register" />
+</form>
+{% if values %}
+<p>submission data</p>
+<ul>
+    {% for key, value in values %}
+    <li>
+        {{ key }}: <strong>{{ value[0] }}</strong>
+    </li>
+    {% endfor %}
+</ul>
+<hr />
+{% endif %} {% endblock %}
