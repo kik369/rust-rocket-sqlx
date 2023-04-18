@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use user::{
     add_project, add_task, add_user, delete_project_db, edit_project, get_all_projects_for_user,
     get_all_tasks_for_project, get_project_by_id, get_user_by_email, get_user_by_id,
-    get_user_by_id_req_guard, Admin, Db, ProjectTasks, Projects, User,
+    user_req_guard, Admin, Db, ProjectTasks, Projects, User,
 };
 
 // #[rocket::async_trait]
@@ -31,7 +31,7 @@ use user::{
 //                     .await
 //                     .succeeded()
 //                     .expect("coul not establish db connection");
-//                 match get_user_by_id_req_guard(db, id).await {
+//                 match user_req_guard(db, id).await {
 //                     Some(user) => {
 //                         return Outcome::Success(user);
 //                     }
@@ -57,7 +57,7 @@ impl<'r> FromRequest<'r> for &'r User {
                             .await
                             .succeeded()
                             .expect("could not establish db connection");
-                        return get_user_by_id_req_guard(db, id).await;
+                        return user_req_guard(db, id).await;
                     }
                 }
                 None
@@ -220,9 +220,7 @@ async fn login_post<'r>(
 ) -> Template {
     match form.value {
         Some(ref submission) => {
-            // TODO: something with the to_string() and as_str() calls
-            // TODO: also check query_user_by_email()
-            let user = get_user_by_email(db, submission.email.to_string()).await;
+            let user = get_user_by_email(db, submission.email).await;
             match user {
                 Some(user) => {
                     if verify_password(submission.password, user.password.as_str()) {

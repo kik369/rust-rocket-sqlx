@@ -108,7 +108,7 @@ pub async fn get_user_by_id(mut db: Connection<Db>, id: u8) -> Option<Json<User>
     }
 }
 
-pub async fn get_user_by_email(mut db: Connection<Db>, email: String) -> Option<Json<User>> {
+pub async fn get_user_by_email(mut db: Connection<Db>, email: &str) -> Option<Json<User>> {
     let result = sqlx::query(
         "SELECT id, email, name, password, created, profile_pic, admin, premium FROM user WHERE email = ?",
     )
@@ -121,7 +121,7 @@ pub async fn get_user_by_email(mut db: Connection<Db>, email: String) -> Option<
     }
 }
 
-pub async fn get_user_by_id_req_guard(mut db: Connection<Db>, id: u8) -> Option<User> {
+pub async fn user_req_guard(mut db: Connection<Db>, id: u8) -> Option<User> {
     let result = sqlx::query(
         "SELECT id, email, name, password, created, profile_pic, admin, premium FROM user WHERE id = ?",
     )
@@ -173,10 +173,7 @@ pub async fn get_all_projects_for_user(
                 .collect();
             Ok(projects)
         }
-        Err(e) => {
-            error!("Failed to get projects: {}", e);
-            Err(format!("Failed to get projects: {}", e))
-        }
+        Err(e) => Err(format!("Failed to get projects: {}", e)),
     }
 }
 
@@ -213,10 +210,7 @@ pub async fn get_all_tasks_for_project(
                 .collect();
             Ok(tasks)
         }
-        Err(e) => {
-            error!("Failed to get tasks: {}", e);
-            Err(format!("Failed to get tasks: {}", e))
-        }
+        Err(e) => Err(format!("Failed to get tasks: {}", e)),
     }
 }
 
