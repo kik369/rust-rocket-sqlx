@@ -275,10 +275,15 @@ async fn profile(user: &User, projects: Projects, flash: Option<FlashMessage<'_>
     match msg {
         Ok(msg) => {
             let context = context! {user, projects, msg};
-            Template::render("profile", &context)
+            Template::render("profile", context)
         }
         Err(_) => Template::render("profile", context! {user, projects}),
     }
+}
+
+#[get("/profile", rank = 2)]
+async fn profile_no_auth() -> Redirect {
+    Redirect::to(uri!("/login"))
 }
 
 #[get("/project/<id>")]
@@ -290,7 +295,7 @@ async fn project_id(
 ) -> Result<Template, Redirect> {
     let project = get_project_by_id(db, id).await.unwrap();
     let context = context! {project, user, tasks};
-    Ok(Template::render("project-id", &context))
+    Ok(Template::render("project-id", context))
 }
 
 #[derive(FromForm, Debug)]
@@ -306,7 +311,7 @@ async fn edit_project_get(db: Connection<Db>, user: &User, id: u8) -> Result<Tem
     match project {
         Ok(project) => {
             let context = context! {user, project};
-            Ok(Template::render("project-edit", &context))
+            Ok(Template::render("project-edit", context))
         }
         Err(_) => Err(Redirect::to(uri!("/"))),
     }
@@ -349,7 +354,7 @@ fn add_project_get(user: Option<&User>) -> Result<Redirect, Template> {
     match user {
         Some(user) => {
             let context = context! {user};
-            Err(Template::render("add-project", &context))
+            Err(Template::render("add-project", context))
         }
         None => Ok(Redirect::to(uri!("/login"))),
     }
@@ -388,7 +393,7 @@ async fn add_task_get(
                 .await
                 .expect("should be a project");
             let context = context! {user, project};
-            Ok(Template::render("add-task", &context))
+            Ok(Template::render("add-task", context))
         }
         None => Err(Redirect::to(uri!("/login"))),
     }
@@ -434,6 +439,7 @@ fn rocket() -> _ {
                 user_id,
                 user_id_no_auth,
                 profile,
+                profile_no_auth,
                 logout,
                 add_project_get,
                 add_project_post,

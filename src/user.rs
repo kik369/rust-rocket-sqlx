@@ -228,7 +228,7 @@ pub async fn get_project_by_id(mut db: Connection<Db>, id: u8) -> Result<Project
                 proj_start_date: row.get("proj_start_date"),
                 proj_end_date: row.get("proj_end_date"),
                 owner: row.get("owner"),
-                // Assuming participants is stored as a comma-separated string of u8 values
+                // assuming participants is stored as a comma-separated string of u8 values
                 participants: row
                     .get::<String, _>("participants")
                     .split(',')
