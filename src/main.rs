@@ -15,9 +15,10 @@ use rocket_db_pools::Connection;
 use rocket_dyn_templates::{context, Template};
 use std::collections::HashMap;
 use user::{
-    add_project, add_task, add_user, delete_project_db, edit_project, get_all_projects_for_user,
+    add_project, add_task, add_time_delta, add_user, complete_task_db, delete_project_db,
+    delete_task_db, edit_project, get_all_projects_and_tasks_for_user, get_all_projects_for_user,
     get_all_tasks_for_project, get_project_by_id, get_user_by_email, get_user_by_id,
-    user_req_guard, Admin, Db, ProjectTasks, Projects, User,
+    user_req_guard, Admin, CompleteTask, Db, ProjectTasks, Projects, User,
 };
 
 // #[rocket::async_trait]
@@ -128,6 +129,27 @@ impl<'r> FromRequest<'r> for ProjectTasks {
         match tasks {
             Ok(tasks) => Outcome::Success(ProjectTasks(tasks)),
             Err(_) => Outcome::Forward(()),
+        }
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for CompleteTask {
+    type Error = std::convert::Infallible;
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let task_id = request.param(4).unwrap().unwrap();
+        let db = request
+            .guard::<Connection<Db>>()
+            .await
+            .succeeded()
+            .expect("coul not establish db connection");
+        let complete_opt = complete_task_db(db, task_id)
+            .await
+            .expect("could not add time delta");
+        match complete_opt {
+            Some(complete) => Outcome::Success(CompleteTask(complete)),
+            None => Outcome::Forward(()),
         }
     }
 }
@@ -269,15 +291,19 @@ async fn user_id_no_auth(_id: u8) -> Redirect {
 }
 
 #[get("/profile")]
-async fn profile(user: &User, projects: Projects, flash: Option<FlashMessage<'_>>) -> Template {
+async fn profile(db: Connection<Db>, user: &User, flash: Option<FlashMessage<'_>>) -> Template {
     let msg = get_flash_msg(flash);
+
+    let proj_w_tasks = get_all_projects_and_tasks_for_user(db, user.id.unwrap())
+        .await
+        .expect("could not get projects and tasks");
 
     match msg {
         Ok(msg) => {
-            let context = context! {user, projects, msg};
+            let context = context! {user, proj_w_tasks, msg};
             Template::render("profile", context)
         }
-        Err(_) => Template::render("profile", context! {user, projects}),
+        Err(_) => Template::render("profile", context! {user, proj_w_tasks}),
     }
 }
 
@@ -292,9 +318,11 @@ async fn project_id(
     id: u8,
     user: &User,
     tasks: ProjectTasks,
+    flash: Option<FlashMessage<'_>>,
 ) -> Result<Template, Redirect> {
+    let msg = get_flash_msg(flash).unwrap_or_default();
     let project = get_project_by_id(db, id).await.unwrap();
-    let context = context! {project, user, tasks};
+    let context = context! {project, user, tasks, msg};
     Ok(Template::render("project-id", context))
 }
 
@@ -346,6 +374,35 @@ async fn delete_project(db: Connection<Db>, id: u8) -> Flash<Redirect> {
     match result {
         Ok(_) => Flash::success(Redirect::to(uri!("/profile")), "Project deleted"),
         Err(_) => Flash::error(Redirect::to(uri!("/profile")), "Hmm... That didn't work 🙃"),
+    }
+}
+
+#[get("/delete/project/<proj_id>/task/<task_id>")]
+async fn delete_task(db: Connection<Db>, task_id: u8, proj_id: u8) -> Flash<Redirect> {
+    let result = delete_task_db(db, task_id).await;
+    match result {
+        Ok(_) => Flash::success(Redirect::to(uri!(project_id(proj_id))), "Task deleted"),
+        Err(_) => Flash::error(
+            Redirect::to(uri!(project_id(proj_id))),
+            "Hmm... That didn't work 🙃",
+        ),
+    }
+}
+
+#[get("/complete/project/<proj_id>/task/<task_id>")]
+async fn complete_task(
+    db: Connection<Db>,
+    task_id: u8,
+    proj_id: u8,
+    _complete: CompleteTask,
+) -> Flash<Redirect> {
+    let time_delta = add_time_delta(db, task_id).await;
+    match time_delta {
+        Ok(_) => Flash::success(Redirect::to(uri!(project_id(proj_id))), "Task completed"),
+        Err(_) => Flash::error(
+            Redirect::to(uri!(project_id(proj_id))),
+            "Hmm... That didn't work 🙃",
+        ),
     }
 }
 
@@ -410,14 +467,17 @@ async fn add_task_post<'r>(
     form: Form<Contextual<'r, AddTaskForm<'r>>>,
     user: Option<&User>,
     id: u8,
-) -> Redirect {
+) -> Result<Flash<Redirect>, Redirect> {
     match user {
         Some(_user) => {
             let form_data = form.value.as_ref().unwrap();
             let _task_id = add_task(db, form_data.description, id).await;
-            Redirect::to(uri!(project_id(id)))
+            Ok(Flash::success(
+                Redirect::to(uri!(project_id(id))),
+                "Task added",
+            ))
         }
-        None => Redirect::to(uri!("/login")),
+        None => Err(Redirect::to(uri!("/login"))),
     }
 }
 
@@ -429,27 +489,29 @@ fn rocket() -> _ {
         .mount(
             "/",
             routes![
+                add_project_get,
+                add_project_post,
+                add_task_get,
+                add_task_post,
+                add_user_get,
+                add_user_post,
+                complete_task,
+                delete_project,
+                delete_task,
+                edit_project_get,
+                edit_project_get_no_auth,
+                edit_project_post,
                 index,
                 index_no_auth,
                 login_get,
                 login_get_no_auth,
                 login_post,
-                add_user_get,
-                add_user_post,
-                user_id,
-                user_id_no_auth,
+                logout,
                 profile,
                 profile_no_auth,
-                logout,
-                add_project_get,
-                add_project_post,
                 project_id,
-                edit_project_get,
-                edit_project_get_no_auth,
-                edit_project_post,
-                delete_project,
-                add_task_get,
-                add_task_post,
+                user_id,
+                user_id_no_auth,
             ],
         )
         .mount("/", FileServer::from(relative!("static/")))
