@@ -26,3 +26,7 @@ features = ["macros", "offline", "migrate"]
 [dependencies.rocket_db_pools]
 version = "=0.1.0-rc.3"
 features = ["sqlx_sqlite"]
+
+[dependencies.tera]
+version = "1.18.1"
+features = ["builtins", "date-locale"]

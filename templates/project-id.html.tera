@@ -18,36 +18,55 @@
     </ul>
     {% endif %}
     <footer>
-        <a href="/edit/project/{{ project.id }}" role="button">Edit Project</a>
-        <a href="/delete/project/{{ project.id }}" role="button" data-method="delete"
-            >Delete Project</a
-        >
+        <a href="/edit/project/{{ project.id }}">🔨 Edit Project</a>
+        <a href="/delete/project/{{ project.id }}">❌ Delete Project</a>
     </footer>
 </article>
 {% if tasks %}
 <article>
     <header>
         <h2>Tasks</h2>
+        <p>
+            <a href="/project/{{ project.id }}/add-task">🟩 Add a new task</a>
+        </p>
     </header>
     <ul>
         {% for task in tasks %}
-        <li>{{ task.description }}</li>
-        <b>id:</b>
+        <li>
+            {{ task.description }}<br />
+            <a href="/delete/project/{{ project.id }}/task/{{ task.id }}"
+                >❌ Delete Task</a
+            >
+
+            {% if not task.task_end_date %}
+            <a href="/complete/project/{{ project.id }}/task/{{ task.id }}"
+                >✔ Complete Task</a
+            >
+            {% endif %} {% if task.time_delta %} ⌛
+            {{ task.time_delta | date }}
+            {% endif %}
+        </li>
+        <b>task.id:</b>
         {{
             task.id
         }}<br />
-        <b>id:</b>
+        <b>task.task_start_dated:</b>
         {{
             task.task_start_date
         }}<br />
-        <b>id:</b>
+        <b>task.task_end_date:</b>
         {{
             task.task_end_date
         }}<br />
-        <b>id:</b>
+        <b>task.owner_proj:</b>
         {{
             task.owner_proj
         }}<br />
+        <b>task.time_delta:</b>
+        {{
+            task.time_delta
+        }}
+        <p></p>
         {% endfor %}
     </ul>
 </article>

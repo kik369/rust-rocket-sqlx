@@ -6,7 +6,12 @@
 <article>
     <header>
         <h2>{{ user.name }}</h2>
-        <img src="{{ user.profile_pic }}" height="75px" width="75px" alt="profile pic" />
+        <img
+            src="{{ user.profile_pic }}"
+            height="100px"
+            width="100px"
+            alt="profile pic"
+        />
     </header>
     <b>user:</b> {{ user.id }}<br />
     <b>email:</b> {{ user.email }}<br />
@@ -31,23 +36,32 @@
 </article>
 
 <h3>Projects</h3>
-{% for project in projects %}
+{% for project in proj_w_tasks %}
 <article>
     <h2>
-        <a href="/project/{{ project.id }}">{{ project.name }}</a>
+        <a href="/project/{{ project.project.id }}">{{
+            project.project.name
+        }}</a>
     </h2>
-    <p><a href="/project/{{ project.id }}/add-task">Add a new task</a></p>
+    <p>
+        <a href="/project/{{ project.project.id }}/add-task"
+            >🟩 Add a new task</a
+        >
+    </p>
     <ul>
-        <li>One</li>
-        <li>Too</li>
+        {% if project.tasks %} {% for task in project.tasks %}
+        <li>{{ task.description }}</li>
+        {% endfor %} {% endif %}
     </ul>
     <footer>
         <small
-            >id: {{ project.id }} / start: {{ project.proj_start_date }} / end:
-            {{ project.proj_end_date }} / owner: {{ project.owner }} <i>({{ user.name }})</i> /
-            participants: {% if project.participants %}
+            >id: {{ project.project.id }} / start:
+            {{ project.project.proj_start_date }} / end:
+            {{ project.project.proj_end_date }} / owner:
+            {{ project.project.owner }} <i>({{ user.name }})</i> / participants:
+            {% if project.project.participants %}
             <ul>
-                {% for participant in project.participants %}
+                {% for participant in project.project.participants %}
                 <li>{{ participant }}</li>
                 {% endfor %}
             </ul>
