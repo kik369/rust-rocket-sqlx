@@ -1,5 +1,5 @@
 use crate::auth::hash_password;
-use chrono::NaiveDateTime;
+use chrono::{Duration, NaiveDateTime, Utc};
 use rocket::fairing::{self, AdHoc};
 use rocket::serde::{json::Json, Deserialize, Serialize};
 use rocket::{Build, Rocket};
@@ -56,7 +56,7 @@ pub struct ProjectTask {
     pub task_start_date: String,
     pub task_end_date: String,
     pub owner_proj: u8,
-    pub time_delta: String,
+    pub time_delta: i64,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -331,9 +331,11 @@ pub async fn add_project(mut db: Connection<Db>, name: &str, id: u8) -> u8 {
 }
 
 pub async fn add_task(mut db: Connection<Db>, description: &str, owner_proj: u8) -> u8 {
+    let task_start_date = Utc::now().to_string();
     let result = sqlx::query!(
-        "INSERT INTO proj_tasks (description, owner_proj) VALUES (?, ?)",
+        "INSERT INTO proj_tasks (description, task_start_date, owner_proj) VALUES (?, ?, ?)",
         description,
+        task_start_date,
         owner_proj,
     )
     .execute(&mut *db)
@@ -384,8 +386,10 @@ pub async fn delete_task_db(mut db: Connection<Db>, id: u8) -> Result<Option<()>
 }
 
 pub async fn complete_task_db(mut db: Connection<Db>, id: u8) -> Result<Option<()>, sqlx::Error> {
+    let task_end_date = Utc::now().to_string();
     let result = sqlx::query!(
-        "UPDATE proj_tasks SET task_end_date = strftime('%Y-%m-%dT%H:%M:%S', 'now') WHERE id = ?",
+        "UPDATE proj_tasks SET task_end_date = ? WHERE id = ?",
+        task_end_date,
         id
     )
     .execute(&mut *db)
@@ -394,35 +398,112 @@ pub async fn complete_task_db(mut db: Connection<Db>, id: u8) -> Result<Option<(
     Ok((result.rows_affected() == 1).then_some(()))
 }
 
+// pub async fn add_time_delta(mut db: Connection<Db>, id: u8) -> Result<Option<()>, sqlx::Error> {
+//     let result = sqlx::query!(
+//         "
+//         UPDATE proj_tasks
+//         SET time_delta =
+//             CASE
+//                 WHEN task_end_date IS NOT NULL THEN
+//                     datetime((strftime('%s', task_end_date) - strftime('%s', task_start_date)), 'unixepoch')
+//                 ELSE
+//                     NULL
+//             END
+//         WHERE id = ?
+//         ",
+//         id
+//     )
+//     .execute(&mut *db)
+//     .await;
+
+//     match result {
+//         Ok(_) => {
+//             println!("Time delta added successfully");
+//             Ok(Some(()))
+//         }
+//         Err(e) => {
+//             error!("Failed to add time delta: {}", e);
+//             Err(e)
+//         }
+//     }
+// }
+
 pub async fn add_time_delta(mut db: Connection<Db>, id: u8) -> Result<Option<()>, sqlx::Error> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         "
-        UPDATE proj_tasks
-        SET time_delta =
-            CASE
-                WHEN task_end_date IS NOT NULL THEN
-                    datetime((strftime('%s', task_end_date) - strftime('%s', task_start_date)), 'unixepoch')
-                ELSE
-                    NULL
-            END
-        WHERE id = ?
+        SELECT task_start_date, task_end_date FROM proj_tasks WHERE id = ?
         ",
-        id
     )
-    .execute(&mut *db)
+    .bind(&id)
+    .fetch_one(&mut *db)
     .await;
 
-    match result {
-        Ok(_) => {
-            println!("Time delta added successfully");
-            Ok(Some(()))
-        }
-        Err(e) => {
-            error!("Failed to add time delta: {}", e);
-            Err(e)
-        }
+    if let Ok(row) = result {
+        let start: String = row.get("task_start_date");
+        let end: String = row.get("task_end_date");
+
+        let start_n = NaiveDateTime::parse_from_str(start.as_str(), "%Y-%m-%d %H:%M:%S%.f %Z")
+            .expect("Failed to parse start date");
+        let end_n = NaiveDateTime::parse_from_str(end.as_str(), "%Y-%m-%d %H:%M:%S%.f %Z")
+            .expect("Failed to parse end date");
+
+        // let start_utc: DateTime<Utc> = DateTime::<Utc>::from_utc(start_n, Utc);
+        // println!("start_utc: {:#?}", start_utc);
+        // let end_utc: DateTime<Utc> = DateTime::<Utc>::from_utc(end_n, Utc);
+        // println!("end_utc: {:#?}\n", end_utc);
+
+        let time_delta = end_n - start_n;
+        // let time_delta = format_duration(time_delta);
+
+        let time_delta = time_delta.num_seconds();
+
+        sqlx::query!(
+            "
+            UPDATE proj_tasks
+            SET time_delta = ?
+            WHERE id = ?
+            ",
+            time_delta,
+            id
+        )
+        .execute(&mut *db)
+        .await?;
+
+        Ok(Some(()))
+    } else {
+        error!("Failed to add time delta");
+        Ok(None)
     }
 }
+
+// pub async fn get_project_by_id(mut db: Connection<Db>, id: u8) -> Result<Project, ()> {
+//     let result = sqlx::query("SELECT * FROM project WHERE id = ?")
+//         .bind(id)
+//         .fetch_one(&mut *db)
+//         .await;
+
+//     match result {
+//         Ok(row) => Ok({
+//             Project {
+//                 id: row.get::<Option<u8>, _>("id"),
+//                 name: row.get("name"),
+//                 proj_start_date: row.get("proj_start_date"),
+//                 proj_end_date: row.get("proj_end_date"),
+//                 owner: row.get("owner"),
+//                 // assuming participants is stored as a comma-separated string of u8 values
+//                 participants: row
+//                     .get::<String, _>("participants")
+//                     .split(',')
+//                     .filter_map(|s| s.parse::<u8>().ok())
+//                     .collect(),
+//             }
+//         }),
+//         Err(e) => {
+//             error!("Failed to get project: {}", e);
+//             Err(())
+//         }
+//     }
+// }
 
 // parses from "2020-01-01T00:00:00" to "2020-01-01 00:00:00"
 // "2020-01-01T00:00:00" is the format that the datepicker returns
@@ -431,6 +512,66 @@ fn _parse_date(date: &str) -> String {
     let parsed_end_date = NaiveDateTime::parse_from_str(date, "%Y-%m-%dT%H:%M:%S")
         .expect("Failed to parse date string");
     parsed_end_date.format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
+fn _format_duration(duration: Duration) -> String {
+    let seconds_in_minute = 60;
+    let seconds_in_hour = 60 * seconds_in_minute;
+    let seconds_in_day = 24 * seconds_in_hour;
+    let seconds_in_week = 7 * seconds_in_day;
+    let seconds_in_month = 30 * seconds_in_day;
+    let seconds_in_year = 365 * seconds_in_day;
+
+    let years = duration.num_seconds() / seconds_in_year;
+    let remaining_seconds = duration.num_seconds() % seconds_in_year;
+
+    let months = remaining_seconds / seconds_in_month;
+    let remaining_seconds = remaining_seconds % seconds_in_month;
+
+    let weeks = remaining_seconds / seconds_in_week;
+    let remaining_seconds = remaining_seconds % seconds_in_week;
+
+    let days = remaining_seconds / seconds_in_day;
+    let remaining_seconds = remaining_seconds % seconds_in_day;
+
+    let hours = remaining_seconds / seconds_in_hour;
+    let remaining_seconds = remaining_seconds % seconds_in_hour;
+
+    let minutes = remaining_seconds / seconds_in_minute;
+    let seconds = remaining_seconds % seconds_in_minute;
+
+    let mut formatted_duration = String::new();
+    if years > 0 {
+        formatted_duration.push_str(&format!("{} years, ", years));
+    }
+    if months > 0 {
+        formatted_duration.push_str(&format!("{} months, ", months));
+    }
+    if weeks > 0 {
+        formatted_duration.push_str(&format!("{} weeks, ", weeks));
+    }
+    if days > 0 {
+        formatted_duration.push_str(&format!("{} days, ", days));
+    }
+    if hours > 0 {
+        formatted_duration.push_str(&format!("{} hours, ", hours));
+    }
+    if minutes > 0 {
+        formatted_duration.push_str(&format!("{} minutes, ", minutes));
+    }
+    if seconds > 0 {
+        formatted_duration.push_str(&format!("{} seconds", seconds));
+    }
+
+    if !formatted_duration.is_empty() {
+        if formatted_duration.ends_with(", ") {
+            formatted_duration.truncate(formatted_duration.len() - 2);
+        }
+    } else {
+        formatted_duration.push_str("0 seconds");
+    }
+
+    formatted_duration
 }
 
 async fn run_migrations(rocket: Rocket<Build>) -> fairing::Result {

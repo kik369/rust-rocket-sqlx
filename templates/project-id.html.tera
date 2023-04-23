@@ -1,10 +1,15 @@
-{% extends "base" %} {% block content %}
+{% import "macros" as macros %} {% extends "base" %} {% block content %}
 <hgroup>
     <h2>Project Details</h2>
 </hgroup>
 <article>
     <header>
         <h2>{{ project.name }}</h2>
+        {% if not tasks %}
+        <p>
+            <a href="/project/{{ project.id }}/add-task">🟩 Add a new task</a>
+        </p>
+        {% endif %}
     </header>
     <b>id:</b> {{ project.id }}<br />
     <b>start:</b> {{ project.proj_start_date }}<br />
@@ -43,7 +48,7 @@
                 >✔ Complete Task</a
             >
             {% endif %} {% if task.time_delta %} ⌛
-            {{ task.time_delta | date }}
+            {{ macros::format_duration(seconds=task.time_delta) }}
             {% endif %}
         </li>
         <b>task.id:</b>

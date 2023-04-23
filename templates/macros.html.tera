@@ -1,0 +1,18 @@
+{% macro format_duration(seconds) %} {% set years = (seconds / 31536000) |
+round(method="floor") %} {% set remaining_seconds = seconds % 31536000 %} {% set
+months = (remaining_seconds / 2592000) | round(method="floor") %} {% set
+remaining_seconds = remaining_seconds % 2592000 %} {% set weeks =
+(remaining_seconds / 604800) | round(method="floor") %} {% set remaining_seconds
+= remaining_seconds % 604800 %} {% set days = (remaining_seconds / 86400) |
+round(method="floor") %} {% set remaining_seconds = remaining_seconds % 86400 %}
+{% set hours = (remaining_seconds / 3600) | round(method="floor") %} {% set
+remaining_seconds = remaining_seconds % 3600 %} {% set minutes =
+(remaining_seconds / 60) | round(method="floor") %} {% set remaining_seconds =
+remaining_seconds % 60 %} {% if years > 0 %}{{ years }} years{% if months > 0 or
+weeks > 0 or days > 0 or hours > 0 or minutes > 0 %}, {% endif %}{% endif %} {%
+if months > 0 %}{{ months }} months{% if weeks > 0 or days > 0 or hours > 0 or
+minutes > 0 %}, {% endif %}{% endif %} {% if weeks > 0 %}{{ weeks }} weeks{% if
+days > 0 or hours > 0 or minutes > 0 %}, {% endif %}{% endif %} {% if days > 0
+%}{{ days }} days{% if hours > 0 or minutes > 0 %}, {% endif %}{% endif %} {% if
+hours > 0 %}{{ hours }} hours{% if minutes > 0 %} and {% endif %}{% endif %} {%
+if minutes > 0 %}{{ minutes }} minutes{% endif %} {% endmacro %}
