@@ -35,44 +35,34 @@
             <a href="/project/{{ project.id }}/add-task">🟩 Add a new task</a>
         </p>
     </header>
-    <ul>
-        {% for task in tasks %}
-        <li>
-            {{ task.description }}<br />
-            <a href="/delete/project/{{ project.id }}/task/{{ task.id }}"
-                >❌ Delete Task</a
-            >
+    {% for task in tasks %}
+    <p>
+        <b>{{ task.description }}</b>
+        <a href="/delete/project/{{ project.id }}/task/{{ task.id }}"
+            >❌ Delete Task</a
+        >
 
-            {% if not task.task_end_date %}
-            <a href="/complete/project/{{ project.id }}/task/{{ task.id }}"
-                >✔ Complete Task</a
-            >
-            {% endif %} {% if task.time_delta %} ⌛
-            {{ macros::format_duration(seconds=task.time_delta) }}
-            {% endif %}
-        </li>
+        {% if not task.task_end_date %}
+        <a href="/complete/project/{{ project.id }}/task/{{ task.id }}"
+            >✔ Complete Task</a
+        >
+        {% endif %} {% if task.time_delta %} ⌛
+        {{ macros::format_duration(seconds=task.time_delta) }}<br />
+        {% endif %}
+
         <b>task.id:</b>
-        {{
-            task.id
-        }}<br />
+        {{ task.id }}<br />
         <b>task.task_start_dated:</b>
-        {{
-            task.task_start_date
-        }}<br />
+        {{ task.task_start_date | date(format="%v %X") }}<br />
         <b>task.task_end_date:</b>
-        {{
-            task.task_end_date
-        }}<br />
+        {% if task.task_end_date %}
+        {{ task.task_end_date | date(format="%v %X") }}
+        {% endif %}<br />
         <b>task.owner_proj:</b>
-        {{
-            task.owner_proj
-        }}<br />
+        {{ task.owner_proj }} ({{ project.name }})<br />
         <b>task.time_delta:</b>
-        {{
-            task.time_delta
-        }}
-        <p></p>
-        {% endfor %}
-    </ul>
+        {{ task.time_delta }} (seconds)
+    </p>
+    {% endfor %}
 </article>
 {% endif %} {% endblock %}

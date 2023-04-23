@@ -303,12 +303,14 @@ pub async fn get_project_by_id(mut db: Connection<Db>, id: u8) -> Result<Project
 }
 
 pub async fn add_user(mut db: Connection<Db>, name: &str, email: &str, password: &str) {
+    let created = Utc::now().to_string();
     let password = hash_password(password);
     let result = sqlx::query!(
-        "INSERT INTO user (name, email, password) VALUES (?, ?, ?)",
+        "INSERT INTO user (name, email, password, created) VALUES (?, ?, ?, ?)",
         name,
         email,
-        password
+        password,
+        created
     )
     .execute(&mut *db)
     .await;
@@ -319,9 +321,15 @@ pub async fn add_user(mut db: Connection<Db>, name: &str, email: &str, password:
 }
 
 pub async fn add_project(mut db: Connection<Db>, name: &str, id: u8) -> u8 {
-    let result = sqlx::query!("INSERT INTO project (name, owner) VALUES (?, ?)", name, id,)
-        .execute(&mut *db)
-        .await;
+    let proj_start_date = Utc::now().to_string();
+    let result = sqlx::query!(
+        "INSERT INTO project (name, proj_start_date, owner) VALUES (?, ?, ?)",
+        name,
+        proj_start_date,
+        id,
+    )
+    .execute(&mut *db)
+    .await;
     match &result {
         Ok(_) => println!("Project added successfully"),
         Err(e) => error!("Failed to add project: {}", e),
@@ -434,7 +442,7 @@ pub async fn add_time_delta(mut db: Connection<Db>, id: u8) -> Result<Option<()>
         SELECT task_start_date, task_end_date FROM proj_tasks WHERE id = ?
         ",
     )
-    .bind(&id)
+    .bind(id)
     .fetch_one(&mut *db)
     .await;
 
