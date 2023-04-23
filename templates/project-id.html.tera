@@ -7,14 +7,18 @@
         <h2>{{ project.name }}</h2>
         {% if not tasks %}
         <p>
-            <a href="/project/{{ project.id }}/add-task">🟩 Add a new task</a>
+            <a href="/project/{{ project.id }}/add-task">➕ Add a new task</a>
         </p>
         {% endif %}
     </header>
     <b>id:</b> {{ project.id }}<br />
-    <b>start:</b> {{ project.proj_start_date }}<br />
-    <b>end:</b> {{ project.proj_end_date }}<br />
-    <b>owner:</b> {{ project.owner }}<br />
+    <b>start:</b> {{ project.proj_start_date | date(format="%v %X") }}<br />
+    <b>end:</b>
+    {% if project.proj_end_date %}
+    {{ project.proj_end_date }}
+    {% endif %}
+    <br />
+    <b>owner:</b> {{ project.owner }} ({{ user.email }}, {{ user.name }})<br />
     <b>participants:</b> {% if project.participants %}
     <ul>
         {% for participant in project.participants %}
@@ -32,7 +36,7 @@
     <header>
         <h2>Tasks</h2>
         <p>
-            <a href="/project/{{ project.id }}/add-task">🟩 Add a new task</a>
+            <a href="/project/{{ project.id }}/add-task">➕ Add a new task</a>
         </p>
     </header>
     {% for task in tasks %}
@@ -47,8 +51,8 @@
             >✔ Complete Task</a
         >
         {% endif %} {% if task.time_delta %} ⌛
-        {{ macros::format_duration(seconds=task.time_delta) }}<br />
-        {% endif %}
+        {{ macros::format_duration(seconds=task.time_delta) }}
+        {% endif %}<br />
 
         <b>task.id:</b>
         {{ task.id }}<br />

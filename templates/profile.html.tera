@@ -45,7 +45,7 @@
     </h2>
     <p>
         <a href="/project/{{ project.project.id }}/add-task"
-            >🟩 Add a new task</a
+            >➕ Add a new task</a
         >
     </p>
     <ul>
