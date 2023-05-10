@@ -252,7 +252,7 @@ async fn login_post<'r>(
                         ));
                         let mut context = HashMap::new();
                         context.insert("user", user.0);
-                        Template::render("index", context)
+                        Template::render("index", &context)
                     } else {
                         Template::render("login", context! {})
                     }
